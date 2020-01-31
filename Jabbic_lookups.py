@@ -14,6 +14,7 @@ from difflib import SequenceMatcher
 import collections
 import inspect
 import sys
+from tqdm import tqdm
 
 class Jabbic(object):
 
@@ -403,7 +404,7 @@ class Jabbic(object):
         return np.mean(sims)
 
     def find_matches(self, n_batches):
-        for q_batch in np.array_split(self.qv, n_batches):
+        for q_batch in tqdm(np.array_split(self.qv, n_batches), desc='Batches processed: '):
             s_sim_avg = []
             r_sim_avg = []
             s_sim_avg.extend(self._sem_sim(q_batch))
