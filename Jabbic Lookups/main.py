@@ -14,7 +14,7 @@ from difflib import SequenceMatcher
 import collections
 import inspect
 import sys
-from tqdm import tqdm
+from tqdm import tqdm_notebook
 
 class Jabbic(object):
 
@@ -23,7 +23,7 @@ class Jabbic(object):
                  bd=None, td=None, bm=None, tm=None,
                  qv=None, tv=None, qri=None, bdti=None, tdti=None,
                  bitw=None, titw=None, qwti=None, twti=None,
-                 bva=None, q_df=None, lm=[]):
+                 bva=None, q_df=None, lm=[], vars_to_use=None):
 
         '''
         Parameters required when creating a Jabbic class.
@@ -136,6 +136,7 @@ class Jabbic(object):
             [query observation, match observation, row index of query in base dataframe, row index of match in target dataframe,
             anchor points of query observation, anchor points of match observation, Ratcliff/Obsershelp similarity]
         '''
+        self.vars_to_use = ['as_name', 'ip_network', 'ip_host', 'file_sha', 'netloc', 'path']
         self.b_fn = b_fn
         self.t_fn = t_fn
         self.f_dir = f_dir
@@ -176,7 +177,7 @@ class Jabbic(object):
 
     def _load_data(self, fname):
         model = self._load_model(f'{self.m_dir}', f'{fname}')
-        data = (pd.read_csv(f'{self.f_dir}/{fname}.csv', sep=',')).dropna()
+        data = (pd.read_csv(f'{self.f_dir}/{fname}.csv', sep=',', usecols=self.vars_to_use)[self.vars_to_use]).dropna()
 
         return data, model
 
@@ -340,7 +341,7 @@ class Jabbic(object):
 
         '''
         s_sim = []
-        for i in range(6):
+        for i in range(len(self.kvi + self.anchors)):
             a = np.array([j[i] for j in q_batch])
             b = np.array([j[i] for j in self.tv])
 
@@ -388,7 +389,7 @@ class Jabbic(object):
         tv_sub = np.array([i - j for i, j in zip(tv_k, tv_c)])
 
         r_sim = []
-        for i in range(5):
+        for i in range(len(self.anchors)):
             a = np.array([j[i] for j in qv_sub])
             b = np.array([j[i] for j in tv_sub])
 
@@ -404,7 +405,7 @@ class Jabbic(object):
         return np.mean(sims)
 
     def find_matches(self, n_batches):
-        for q_batch in tqdm(np.array_split(self.qv, n_batches), desc='Batches processed: '):
+        for q_batch in tqdm_notebook(np.array_split(self.qv, n_batches), desc='Batches processed: '):
             s_sim_avg = []
             r_sim_avg = []
             s_sim_avg.extend(self._sem_sim(q_batch))
